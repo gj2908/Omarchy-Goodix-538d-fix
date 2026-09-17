@@ -29,8 +29,8 @@ Omarchy (via Omarchy's own fingerprint setup), once you enroll a finger.
 ## Install
 
 ```bash
-git clone https://github.com/gj2908/goodix-538d.git
-cd goodix-538d
+git clone https://github.com/gj2908/Omarch-Goodix-538d-fix.git
+cd Omarch-Goodix-538d-fix
 ./install.sh
 ```
 
