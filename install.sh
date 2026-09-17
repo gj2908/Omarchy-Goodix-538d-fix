@@ -192,8 +192,11 @@ Done. Next steps:
   fprintd-enroll          # press the sensor ~10 times, lifting between presses
   fprintd-verify          # confirm a match
 
-To use it for lock/sudo/polkit on Omarchy:
+To use it for sudo/polkit, and the lock screen:
 
-  omarchy-setup-security-fingerprint
+  ./enable-fingerprint-auth.sh          # sudo + polkit
+  ./enable-fingerprint-auth.sh --lock   # also the Omarchy lock screen
+
+On Omarchy, omarchy-setup-security-fingerprint does the same through the wizard.
 
 NEXT

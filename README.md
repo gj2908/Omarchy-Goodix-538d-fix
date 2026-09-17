@@ -16,9 +16,11 @@ uses [lbssousa/libfprint](https://github.com/lbssousa/libfprint) branch
 - udev rule that keeps the reader out of USB autosuspend
 - `fprintd` drop-in that only exposes reader dumps for debugging
 - An Omarchy `post-update` hook that reinstalls the driver if an update drops it
+- `enable-fingerprint-auth.sh` to switch on fingerprint for `sudo`, polkit, and
+  the lock screen (and `--remove` to switch it back off)
 
-After this, fingerprint works for lock screen, `sudo`, and polkit prompts on
-Omarchy (via Omarchy's own fingerprint setup), once you enroll a finger.
+After this, fingerprint works for lock screen, `sudo`, and polkit prompts, once
+you enroll a finger and run `./enable-fingerprint-auth.sh`.
 
 ## Requirements
 
@@ -53,18 +55,39 @@ fprintd-verify              # confirm a match
 fprintd-list "$USER"        # show enrolled prints
 ```
 
-Then enable it for login, lock, and `sudo`. On Omarchy:
+## Enable fingerprint auth (sudo, lock, polkit)
+
+Now hand the sensor to the auth stacks:
 
 ```bash
-omarchy-setup-security-fingerprint
+./enable-fingerprint-auth.sh           # sudo + polkit
+./enable-fingerprint-auth.sh --lock    # also the Omarchy lock screen
 ```
 
-On plain Arch, add to the top of `/etc/pam.d/sudo` (and the equivalent lock/polkit
-stack):
+The script inserts Omarchy's two lines at the top of `/etc/pam.d/sudo` and
+`/etc/pam.d/polkit-1`:
 
 ```
-auth  sufficient  pam_fprintd.so
+auth  [success=1 default=ignore] pam_exec.so quiet /usr/bin/omarchy-hw-laptop-closed
+auth  sufficient                  pam_fprintd.so
 ```
+
+The `pam_exec` line is only added when Omarchy's lid check is installed. Because
+`pam_fprintd` is `sufficient`, a failed read falls straight through to the
+password, so this cannot lock you out. `--lock` additionally writes
+`/etc/pam.d/omarchy-lock-fingerprint`, which the Omarchy shell lock uses.
+
+Test it:
+
+```bash
+sudo -k && sudo true     # touch the sensor when prompted
+```
+
+Every file it edits is copied to `.pre-fingerprint` beside itself first, and
+`./enable-fingerprint-auth.sh --remove` takes the lines back out.
+
+On Omarchy, `omarchy-setup-security-fingerprint` does the same thing through the
+wizard (and also wires the shell lock) — either path works.
 
 ## What the installer changes
 
@@ -75,6 +98,10 @@ auth  sufficient  pam_fprintd.so
 | `/etc/udev/rules.d/99-fingerprint-goodix.rules` | disables USB autosuspend for `27c6:538d` |
 | `/etc/systemd/system/fprintd.service.d/debug.conf` | `GOODIX53XD_DUMP=/var/lib/fprint/fp` (optional) |
 | `~/.config/omarchy/hooks/post-update.d/fingerprint-goodix-538d-hook` | reinstalls the driver after updates (Omarchy only) |
+
+`install.sh` does not touch PAM. Fingerprint for `sudo`/polkit/lock is opt-in via
+`./enable-fingerprint-auth.sh`, which edits `/etc/pam.d/sudo` and
+`/etc/pam.d/polkit-1` (and, with `--lock`, `/etc/pam.d/omarchy-lock-fingerprint`).
 
 ## Troubleshooting
 
