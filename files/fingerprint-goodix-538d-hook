@@ -1,0 +1,13 @@
+#!/bin/bash
+# Reinstall the Goodix 538d libfprint build if a system update dropped it.
+# Installed to ~/.config/omarchy/hooks/post-update.d/ and run by `omarchy update`.
+
+set -e
+
+pacman -Q libfprint-goodix-538d >/dev/null 2>&1 && exit 0
+
+pkg=$(ls /opt/goodix-538d/libfprint-goodix-538d-*.pkg.tar.zst 2>/dev/null | grep -v -- '-debug-' | head -1)
+[[ -f $pkg ]] || exit 0
+
+sudo pacman -U --noconfirm --ask 4 "$pkg"
+sudo systemctl restart fprintd

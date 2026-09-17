@@ -1,0 +1,10 @@
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -269,6 +269,6 @@
+-    foreach driver_test: drivers_tests
++    foreach driver_test, _unused: drivers_tests
+         test(driver_test,
+             sh,
+             args: ['-c', 'exit 77']
+         )
+     endforeach
